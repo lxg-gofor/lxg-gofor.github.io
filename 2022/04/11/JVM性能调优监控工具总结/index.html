@@ -1,0 +1,243 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JVM性能调优监控工具总结 | luoxguan</title><meta name="keywords" content="JVM"><meta name="author" content="Luo_xguan"><meta name="copyright" content="Luo_xguan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="JVM性能调优监控工具总结现实企业级Java应用开发、维护中，有时候我们会碰到下面这些问题：  OutOfMemoryError，内存不足 内存泄露 线程死锁 锁争用（Lock Contention） Java进程消耗CPU过高 ……  这些问题在日常开发、维护中可能被很多人忽视（比如有的人遇到上面的问题只是重启服务器或者调大内存，而不会深究问题根源），但能够理解并解决这些问题是Java程序员进阶">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM性能调优监控工具总结">
+<meta property="og:url" content="http://example.com/2022/04/11/JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="luoxguan">
+<meta property="og:description" content="JVM性能调优监控工具总结现实企业级Java应用开发、维护中，有时候我们会碰到下面这些问题：  OutOfMemoryError，内存不足 内存泄露 线程死锁 锁争用（Lock Contention） Java进程消耗CPU过高 ……  这些问题在日常开发、维护中可能被很多人忽视（比如有的人遇到上面的问题只是重启服务器或者调大内存，而不会深究问题根源），但能够理解并解决这些问题是Java程序员进阶">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/11.jfif">
+<meta property="article:published_time" content="2022-04-11T13:22:50.000Z">
+<meta property="article:modified_time" content="2022-04-11T13:23:41.761Z">
+<meta property="article:author" content="Luo_xguan">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/11.jfif"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2022/04/11/JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'JVM性能调优监控工具总结',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-04-11 21:23:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if (GLOBAL_CONFIG_SITE.isHome && /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/wechathead.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">17</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">13</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> Java</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/Java/Java%E5%9F%BA%E7%A1%80/"><span> Java基础</span></a></li><li><a class="site-page child" href="/categories/Java/Java%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/"><span> Java集合框架</span></a></li><li><a class="site-page child" href="/categories/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/"><span> 并发编程</span></a></li><li><a class="site-page child" href="/categories/Java/JVM/"><span> JVM</span></a></li><li><a class="site-page child" href="/categories/Java/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"><span> 设计模式</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 计算机基础</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/"><span> 计算机网络</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/"><span> 操作系统</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"><span> 数据结构</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E7%AE%97%E6%B3%95/"><span> 算法</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 数据库</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80/"><span> 数据库基础</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/"><span> MySQL</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/Oracle/"><span> Oracle</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/Redis/"><span> Redis</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 常用框架</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring/"><span> Spring</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/SPring%20MVC/"><span> Spring MVC</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20MyBatis/"><span> Mybatis</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Netty/"><span> Netty</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20Boot/"><span> Spring Boot</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20Cloud/"><span> Spring Cloud</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 分布式</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/RPC/"><span> RPC</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 高性能</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/"><span> 消息队列</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 高可用</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/"><span> 集群</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 读书</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E8%AF%BB%E4%B9%A6/%E4%B9%A6%E5%8D%95/"><span> 书单</span></a></li><li><a class="site-page child" href="/categories/%E8%AF%BB%E4%B9%A6/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/"><span> 读书笔记</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/images/11.jfif')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">luoxguan</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> Java</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/Java/Java%E5%9F%BA%E7%A1%80/"><span> Java基础</span></a></li><li><a class="site-page child" href="/categories/Java/Java%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/"><span> Java集合框架</span></a></li><li><a class="site-page child" href="/categories/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/"><span> 并发编程</span></a></li><li><a class="site-page child" href="/categories/Java/JVM/"><span> JVM</span></a></li><li><a class="site-page child" href="/categories/Java/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"><span> 设计模式</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 计算机基础</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/"><span> 计算机网络</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/"><span> 操作系统</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"><span> 数据结构</span></a></li><li><a class="site-page child" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E7%AE%97%E6%B3%95/"><span> 算法</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 数据库</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80/"><span> 数据库基础</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/"><span> MySQL</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/Oracle/"><span> Oracle</span></a></li><li><a class="site-page child" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/Redis/"><span> Redis</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 常用框架</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring/"><span> Spring</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/SPring%20MVC/"><span> Spring MVC</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20MyBatis/"><span> Mybatis</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Netty/"><span> Netty</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20Boot/"><span> Spring Boot</span></a></li><li><a class="site-page child" href="/categories/%E5%B8%B8%E7%94%A8%E6%A1%86%E6%9E%B6/Spring%20Cloud/"><span> Spring Cloud</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 分布式</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/RPC/"><span> RPC</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 高性能</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E9%AB%98%E6%80%A7%E8%83%BD/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/"><span> 消息队列</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 高可用</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/"><span> 集群</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 读书</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/%E8%AF%BB%E4%B9%A6/%E4%B9%A6%E5%8D%95/"><span> 书单</span></a></li><li><a class="site-page child" href="/categories/%E8%AF%BB%E4%B9%A6/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/"><span> 读书笔记</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">JVM性能调优监控工具总结</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-04-11T13:22:50.000Z" title="发表于 2022-04-11 21:22:50">2022-04-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-04-11T13:23:41.761Z" title="更新于 2022-04-11 21:23:41">2022-04-11</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Java/">Java</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Java/JVM/">JVM</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="JVM性能调优监控工具总结"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="JVM性能调优监控工具总结"><a href="#JVM性能调优监控工具总结" class="headerlink" title="JVM性能调优监控工具总结"></a>JVM性能调优监控工具总结</h2><p>现实企业级Java应用开发、维护中，有时候我们会碰到下面这些问题：</p>
+<ul>
+<li>OutOfMemoryError，内存不足</li>
+<li>内存泄露</li>
+<li>线程死锁</li>
+<li>锁争用（Lock Contention）</li>
+<li>Java进程消耗CPU过高 ……</li>
+</ul>
+<p>这些问题在日常开发、维护中可能被很多人忽视（比如有的人遇到上面的问题只是重启服务器或者调大内存，而不会深究问题根源），但能够理解并解决这些问题是Java程序员进阶的必备要求。</p>
+<p>些监控、调优工具的使用，无论你是运维、开发、测试，都是必须掌握的。</p>
+<h3 id="一、JDK命令行工具"><a href="#一、JDK命令行工具" class="headerlink" title="一、JDK命令行工具"></a>一、JDK命令行工具</h3><p>这些命令在JDK安装目录下的bin目录下：</p>
+<ul>
+<li><strong><code>jps</code></strong> (JVM Process Status）: 类似 UNIX 的 <code>ps</code> 命令。用于查看所有 Java 进程的启动类、传入参数和 Java 虚拟机参数等信息；</li>
+<li>**<code>jstat</code>**（JVM Statistics Monitoring Tool）: 用于收集 HotSpot 虚拟机各方面的运行数据;</li>
+<li><strong><code>jinfo</code></strong> (Configuration Info for Java) : Configuration Info for Java,显示虚拟机配置信息;</li>
+<li><strong><code>jmap</code></strong> (Memory Map for Java) : 生成堆转储快照;</li>
+<li><strong><code>jhat</code></strong> (JVM Heap Dump Browser) : 用于分析 heapdump 文件，它会建立一个 HTTP/HTML 服务器，让用户可以在浏览器上查看分析结果;</li>
+<li><strong><code>jstack</code></strong> (Stack Trace for Java) : 生成虚拟机当前时刻的线程快照，线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈的集合。</li>
+</ul>
+<h4 id="jps-查看所有的Java进程"><a href="#jps-查看所有的Java进程" class="headerlink" title="jps: 查看所有的Java进程"></a>jps: 查看所有的Java进程</h4><p><code>jps</code>(JVM Process Status) 命令类似 UNIX 的 <code>ps</code> 命令。</p>
+<p><code>jps</code>：显示虚拟机执行主类名称以及这些进程的本地虚拟机唯一 ID（Local Virtual Machine Identifier,LVMID）。<code>jps -q</code> ：只输出进程的本地虚拟机唯一 ID。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\SnailClimb&gt;jps</span><br><span class="line">7360 NettyClient2</span><br><span class="line">17396</span><br><span class="line">7972 Launcher</span><br><span class="line">16504 Jps</span><br><span class="line">17340 NettyServer</span><br></pre></td></tr></table></figure>
+
+<p><code>jps -l</code>:输出主类的全名，如果进程执行的是 Jar 包，输出 Jar 路径。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\SnailClimb&gt;jps -l</span><br><span class="line">7360 firstNettyDemo.NettyClient2</span><br><span class="line">17396</span><br><span class="line">7972 org.jetbrains.jps.cmdline.Launcher</span><br><span class="line">16492 sun.tools.jps.Jps</span><br><span class="line">17340 firstNettyDemo.NettyServer</span><br></pre></td></tr></table></figure>
+
+<p><code>jps -v</code>：输出虚拟机进程启动时 JVM 参数。</p>
+<p><code>jps -m</code>：输出传递给 Java 进程 main() 函数的参数。</p>
+<h4 id="jstat-监视虚拟机各种运行状态"><a href="#jstat-监视虚拟机各种运行状态" class="headerlink" title="jstat: 监视虚拟机各种运行状态"></a>jstat: 监视虚拟机各种运行状态</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jstat -&lt;option&gt; [-t] [-h&lt;lines&gt;] &lt;vmid&gt; [&lt;interval&gt; [&lt;count&gt;]]</span><br></pre></td></tr></table></figure>
+
+<p>比如 <code>jstat -gc -h3 31736 1000 10</code>表示分析进程 id 为 31736 的 gc 情况，每隔 1000ms 打印一次记录，打印 10 次停止，每 3 行后打印指标头部。</p>
+<p><strong>常见的 option 如下：</strong></p>
+<ul>
+<li><code>jstat -class vmid</code> ：显示 ClassLoader 的相关信息；</li>
+<li><code>jstat -compiler vmid</code> ：显示 JIT 编译的相关信息；</li>
+<li><code>jstat -gc vmid</code> ：显示与 GC 相关的堆信息；</li>
+<li><code>jstat -gccapacity vmid</code> ：显示各个代的容量及使用情况；</li>
+<li><code>jstat -gcnew vmid</code> ：显示新生代信息；</li>
+<li><code>jstat -gcnewcapcacity vmid</code> ：显示新生代大小与使用情况；</li>
+<li><code>jstat -gcold vmid</code> ：显示老年代和永久代的行为统计，从jdk1.8开始,该选项仅表示老年代，因为永久代被移除了；</li>
+<li><code>jstat -gcoldcapacity vmid</code> ：显示老年代的大小；</li>
+<li><code>jstat -gcpermcapacity vmid</code> ：显示永久代大小，从jdk1.8开始,该选项不存在了，因为永久代被移除了；</li>
+<li><code>jstat -gcutil vmid</code> ：显示垃圾收集信息；</li>
+</ul>
+<p>另外，加上 <code>-t</code>参数可以在输出信息上加一个 Timestamp 列，显示程序的运行时间。</p>
+<h4 id="jinfo-实时的查看和调整虚拟机各项参数"><a href="#jinfo-实时的查看和调整虚拟机各项参数" class="headerlink" title="jinfo: 实时的查看和调整虚拟机各项参数"></a>jinfo: 实时的查看和调整虚拟机各项参数</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jinfo vmid :输出当前 jvm 进程的全部参数和系统属性 (第一部分是系统的属性，第二部分是 JVM 的参数)。</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="jmap-生成堆转储快照"><a href="#jmap-生成堆转储快照" class="headerlink" title="jmap: 生成堆转储快照"></a>jmap: 生成堆转储快照</h4><p><code>jmap</code>（Memory Map for Java）命令用于生成堆转储快照。 如果不使用 <code>jmap</code> 命令，要想获取 Java 堆转储，可以使用 <code>“-XX:+HeapDumpOnOutOfMemoryError”</code> 参数，可以让虚拟机在 OOM 异常出现之后自动生成 dump 文件，Linux 命令下可以通过 <code>kill -3</code> 发送进程退出信号也能拿到 dump 文件。</p>
+<p><code>jmap</code> 的作用并不仅仅是为了获取 dump 文件，它还可以查询 finalizer 执行队列、Java 堆和永久代的详细信息，如空间使用率、当前使用的是哪种收集器等。和<code>jinfo</code>一样，<code>jmap</code>有不少功能在 Windows 平台下也是受限制的。</p>
+<p>示例：将指定应用程序的堆快照输出到桌面。后面，可以通过 jhat、Visual VM 等工具分析该堆文件。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\SnailClimb&gt;jmap <span class="literal">-dump</span>:format=b,file=C:\Users\SnailClimb\Desktop\heap.hprof <span class="number">17340</span></span><br><span class="line">Dumping heap to C:\Users\SnailClimb\Desktop\heap.hprof ...</span><br><span class="line">Heap dump file created</span><br></pre></td></tr></table></figure>
+
+<h4 id="jhat-分析heapdump文件"><a href="#jhat-分析heapdump文件" class="headerlink" title="jhat: 分析heapdump文件"></a>jhat: 分析heapdump文件</h4><p><strong><code>jhat</code></strong> 用于分析 heapdump 文件，它会建立一个 HTTP/HTML 服务器，让用户可以在浏览器上查看分析结果。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\SnailClimb&gt;jhat C:\Users\SnailClimb\Desktop\heap.hprof</span><br><span class="line">Reading from C:\Users\SnailClimb\Desktop\heap.hprof...</span><br><span class="line">Dump file created Sat May <span class="number">04</span> <span class="number">12</span>:<span class="number">30</span>:<span class="number">31</span> CST <span class="number">2019</span></span><br><span class="line">Snapshot read, resolving...</span><br><span class="line">Resolving <span class="number">131419</span> objects...</span><br><span class="line">Chasing references, expect <span class="number">26</span> dots..........................</span><br><span class="line">Eliminating duplicate references..........................</span><br><span class="line">Snapshot resolved.</span><br><span class="line">Started HTTP server on port <span class="number">7000</span></span><br><span class="line">Server is ready.</span><br></pre></td></tr></table></figure>
+
+<p>访问 <a target="_blank" rel="noopener" href="http://localhost:7000/">http://localhost:7000/</a></p>
+<h4 id="jstack-生成虚拟机当前时刻的线程快照"><a href="#jstack-生成虚拟机当前时刻的线程快照" class="headerlink" title="jstack:生成虚拟机当前时刻的线程快照"></a>jstack:生成虚拟机当前时刻的线程快照</h4><p><code>jstack</code>（Stack Trace for Java）命令用于生成虚拟机当前时刻的线程快照。线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈的集合.</p>
+<p>生成线程快照的目的主要是定位线程长时间出现停顿的原因，如线程间死锁、死循环、请求外部资源导致的长时间等待等都是导致线程长时间停顿的原因。线程出现停顿的时候通过<code>jstack</code>来查看各个线程的调用堆栈，就可以知道没有响应的线程到底在后台做些什么事情，或者在等待些什么资源。</p>
+<h3 id="二、JDK可视化分析工具"><a href="#二、JDK可视化分析工具" class="headerlink" title="二、JDK可视化分析工具"></a>二、JDK可视化分析工具</h3><h4 id="2-1-JConsole-Java-监视与管理控制台"><a href="#2-1-JConsole-Java-监视与管理控制台" class="headerlink" title="2.1 JConsole:Java 监视与管理控制台"></a>2.1 JConsole:Java 监视与管理控制台</h4><p>JConsole 是基于 JMX 的可视化监视、管理工具。可以很方便的监视本地及远程服务器的 java 进程的内存使用情况。你可以在控制台输出<code>console</code>命令启动或者在 JDK 目录下的 bin 目录找到<code>jconsole.exe</code>然后双击启动。</p>
+<p><strong>连接 Jconsole</strong></p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/308c3e8a9abdad440efdc17ad2ff910e.png" alt="连接 Jconsole"></p>
+<p>如果需要使用 JConsole 连接远程进程，可以在远程 Java 程序启动时加上下面这些参数:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-Djava.rmi.server.hostname=外网访问 ip 地址 </span><br><span class="line">-Dcom.sun.management.jmxremote.port=60001   //监控的端口号</span><br><span class="line">-Dcom.sun.management.jmxremote.authenticate=false   //关闭认证</span><br><span class="line">-Dcom.sun.management.jmxremote.ssl=false</span><br></pre></td></tr></table></figure>
+
+<p>在使用 JConsole 连接时，远程进程地址如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">外网访问 ip 地址:60001 </span><br></pre></td></tr></table></figure>
+
+<p><strong>查看 Java 程序概况</strong></p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/96b6062be341fc3bd7d9703003af0183.png" alt="查看 Java 程序概况 "></p>
+<p><strong>内存监控</strong></p>
+<p>JConsole 可以显示当前内存的详细信息。不仅包括堆内存/非堆内存的整体信息，还可以细化到 eden 区、survivor 区等的使用情况，如下图所示。</p>
+<p>点击右边的“执行 GC(G)”按钮可以强制应用程序执行一个 Full GC</p>
+<blockquote>
+<p><strong>新生代 GC（Minor GC）</strong>:指发生新生代的的垃圾收集动作，Minor GC 非常频繁，回收速度一般也比较快。</p>
+<p><strong>老年代 GC（Major GC/Full GC）</strong>:指发生在老年代的 GC，出现了 Major GC 经常会伴随至少一次的 Minor GC（并非绝对），Major GC 的速度一般会比 Minor GC 的慢 10 倍以上</p>
+</blockquote>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/1e95b77ccaff7a2943354e6b00c40a71.png" alt="内存监控 "></p>
+<p><strong>线程监控</strong></p>
+<p>类似我们前面讲的 <code>jstack</code> 命令，不过这个是可视化的。</p>
+<p>最下面有一个”检测死锁 (D)”按钮，点击这个按钮可以自动为你找到发生死锁的线程以及它们的详细信息 。</p>
+<p><img src="https://img-blog.csdnimg.cn/img_convert/01d97b01037b776b69bf8d639da583ea.png" alt="线程监控 "></p>
+<h4 id="2-2-Visual-VM-多合一故障处理工具"><a href="#2-2-Visual-VM-多合一故障处理工具" class="headerlink" title="2.2 Visual VM:多合一故障处理工具"></a>2.2 Visual VM:多合一故障处理工具</h4><p>VisualVM 提供在 Java 虚拟机 (Java Virutal Machine, JVM) 上运行的 Java 应用程序的详细信息。在 VisualVM 的图形用户界面中，可以方便、快捷地查看多个 Java 应用程序的相关信息。Visual VM 官网：<a target="_blank" rel="noopener" href="https://visualvm.github.io/">https://visualvm.github.io/  (opens new window)</a> 。Visual VM 中文文档:<a target="_blank" rel="noopener" href="https://visualvm.github.io/documentation.html">https://visualvm.github.io/documentation.html  (opens new window)</a> </p>
+<p>VisualVM 基于 NetBeans 平台开发，因此他一开始就具备了插件扩展功能的特性，通过插件扩展支持，VisualVM 可以做到：</p>
+<ul>
+<li>显示虚拟机进程以及进程的配置、环境信息（jps、jinfo）。</li>
+<li>监视应用程序的 CPU、GC、堆、方法区以及线程的信息（jstat、jstack）。</li>
+<li>dump 以及分析堆转储快照（jmap、jhat）。</li>
+<li>方法级的程序运行性能分析，找到被调用最多、运行时间最长的方法。</li>
+<li>离线程序快照：收集程序的运行时配置、线程 dump、内存 dump 等信息建立一个快照，可以将快照发送开发者处进行 Bug 反馈</li>
+<li>其他 plugins 的无限的可能性……</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Luo_xguan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2022/04/11/JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">http://example.com/2022/04/11/JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://example.com" target="_blank">luoxguan</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/JVM/">JVM</a></div><div class="post_share"><div class="social-share" data-image="/images/11.jfif" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button button--animated"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/04/11/JVM%E9%9D%A2%E8%AF%95%E9%A2%98%E6%80%BB%E7%BB%93/"><img class="prev-cover" src="/images/12.jfif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">JVM面试题总结</div></div></a></div><div class="next-post pull-right"><a href="/2022/04/11/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%BF%AB%E9%80%9F%E6%80%BB%E7%BB%93/"><img class="next-cover" src="/images/7.jfif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Java虚拟机快速总结</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/04/11/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%BF%AB%E9%80%9F%E6%80%BB%E7%BB%93/" title="Java虚拟机快速总结"><img class="cover" src="/images/7.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-11</div><div class="title">Java虚拟机快速总结</div></div></a></div><div><a href="/2022/04/11/JVM%E9%9D%A2%E8%AF%95%E9%A2%98%E6%80%BB%E7%BB%93/" title="JVM面试题总结"><img class="cover" src="/images/12.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-04-11</div><div class="title">JVM面试题总结</div></div></a></div><div><a href="/2021/11/27/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E8%99%9A%E6%8B%9F%E6%9C%BA-JVM%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E3%80%8B%E7%AC%94%E8%AE%B01-jvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F/" title="《深入理解Java虚拟机:JVM高级特性与最佳实践》笔记1-jvm内存区域"><img class="cover" src="/images/15.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-11-27</div><div class="title">《深入理解Java虚拟机:JVM高级特性与最佳实践》笔记1-jvm内存区域</div></div></a></div><div><a href="/2021/11/27/%E3%80%8A%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E8%99%9A%E6%8B%9F%E6%9C%BA-JVM%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E3%80%8B%E7%AC%94%E8%AE%B02-HotSpot%E5%AF%B9%E8%B1%A1%E6%8E%A2%E7%A7%98/" title="《深入理解Java虚拟机:JVM高级特性与最佳实践》笔记2-HotSpot对象探秘"><img class="cover" src="/images/14.jfif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-11-27</div><div class="title">《深入理解Java虚拟机:JVM高级特性与最佳实践》笔记2-HotSpot对象探秘</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/wechathead.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Luo_xguan</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">17</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">13</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">9</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/lxg-gofor" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:luoxiaoguan@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93"><span class="toc-text">JVM性能调优监控工具总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81JDK%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7"><span class="toc-text">一、JDK命令行工具</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#jps-%E6%9F%A5%E7%9C%8B%E6%89%80%E6%9C%89%E7%9A%84Java%E8%BF%9B%E7%A8%8B"><span class="toc-text">jps: 查看所有的Java进程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#jstat-%E7%9B%91%E8%A7%86%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%90%84%E7%A7%8D%E8%BF%90%E8%A1%8C%E7%8A%B6%E6%80%81"><span class="toc-text">jstat: 监视虚拟机各种运行状态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#jinfo-%E5%AE%9E%E6%97%B6%E7%9A%84%E6%9F%A5%E7%9C%8B%E5%92%8C%E8%B0%83%E6%95%B4%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%90%84%E9%A1%B9%E5%8F%82%E6%95%B0"><span class="toc-text">jinfo: 实时的查看和调整虚拟机各项参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#jmap-%E7%94%9F%E6%88%90%E5%A0%86%E8%BD%AC%E5%82%A8%E5%BF%AB%E7%85%A7"><span class="toc-text">jmap: 生成堆转储快照</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#jhat-%E5%88%86%E6%9E%90heapdump%E6%96%87%E4%BB%B6"><span class="toc-text">jhat: 分析heapdump文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#jstack-%E7%94%9F%E6%88%90%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%BD%93%E5%89%8D%E6%97%B6%E5%88%BB%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BF%AB%E7%85%A7"><span class="toc-text">jstack:生成虚拟机当前时刻的线程快照</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81JDK%E5%8F%AF%E8%A7%86%E5%8C%96%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7"><span class="toc-text">二、JDK可视化分析工具</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-JConsole-Java-%E7%9B%91%E8%A7%86%E4%B8%8E%E7%AE%A1%E7%90%86%E6%8E%A7%E5%88%B6%E5%8F%B0"><span class="toc-text">2.1 JConsole:Java 监视与管理控制台</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-Visual-VM-%E5%A4%9A%E5%90%88%E4%B8%80%E6%95%85%E9%9A%9C%E5%A4%84%E7%90%86%E5%B7%A5%E5%85%B7"><span class="toc-text">2.2 Visual VM:多合一故障处理工具</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/04/11/JVM%E9%9D%A2%E8%AF%95%E9%A2%98%E6%80%BB%E7%BB%93/" title="JVM面试题总结">JVM面试题总结</a><time datetime="2022-04-11T13:24:17.000Z" title="发表于 2022-04-11 21:24:17">2022-04-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/04/11/JVM%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" title="JVM性能调优监控工具总结">JVM性能调优监控工具总结</a><time datetime="2022-04-11T13:22:50.000Z" title="发表于 2022-04-11 21:22:50">2022-04-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/04/11/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%BF%AB%E9%80%9F%E6%80%BB%E7%BB%93/" title="Java虚拟机快速总结">Java虚拟机快速总结</a><time datetime="2022-04-11T13:20:55.000Z" title="发表于 2022-04-11 21:20:55">2022-04-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/04/11/mysql6-%E4%BA%8B%E5%8A%A1/" title="mysql6:事务">mysql6:事务</a><time datetime="2022-04-11T02:23:58.000Z" title="发表于 2022-04-11 10:23:58">2022-04-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2022/04/11/mysql5-%E6%9F%A5%E8%AF%A2%E7%BC%93%E5%AD%98%E4%BB%8B%E7%BB%8D/" title="mysql5:查询缓存介绍">mysql5:查询缓存介绍</a><time datetime="2022-04-11T02:08:57.000Z" title="发表于 2022-04-11 10:08:57">2022-04-11</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2022 By Luo_xguan</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
